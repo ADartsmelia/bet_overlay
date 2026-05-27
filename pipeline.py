@@ -6,8 +6,8 @@ from pathlib import Path
 
 log = logging.getLogger("pipeline")
 
-SRT_INPUT  = "srt://192.168.200.130:33511?mode=caller&latency=200&rcvbuf=1316&sndbuf=1316"
-SRT_OUTPUT = "srt://0.0.0.0:33512?mode=listener&latency=200&rcvbuf=1316&sndbuf=1316"
+SRT_INPUT  = "srt://192.168.200.130:33511?mode=caller&latency=20"
+SRT_OUTPUT = "srt://0.0.0.0:33512?mode=listener&latency=20"
 UDP_MAIN   = "udp://127.0.0.1:5000"
 UDP_SCTE   = "udp://127.0.0.1:5001"
 ZMQ_PORT   = 5556
@@ -114,7 +114,7 @@ class Pipeline:
             return [
                 "ffmpeg", "-y",
                 "-thread_queue_size", "512",
-                "-i", f"{UDP_MAIN}?fifo_size=5000000&overrun_nonfatal=1&timeout=60000000",
+                "-i", f"{UDP_MAIN}?fifo_size=1316&overrun_nonfatal=1&timeout=60000000",
                 "-thread_queue_size", "512",
                 "-stream_loop", "-1",
                 "-i", OVERLAY,
@@ -136,7 +136,7 @@ class Pipeline:
             return [
                 "ffmpeg", "-y",
                 "-thread_queue_size", "512",
-                "-i", f"{UDP_MAIN}?fifo_size=5000000&overrun_nonfatal=1&timeout=60000000",
+                "-i", f"{UDP_MAIN}?fifo_size=1316&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
                 f"[0:v]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
