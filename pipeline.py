@@ -63,7 +63,7 @@ class FFmpegProcess:
             if self._stop.is_set():
                 break
             elapsed = time.time() - self._last_start
-            backoff = 1.0 if elapsed > 60 else min(backoff * 2, 30.0)
+            backoff = 2.0 if elapsed > 60 else min(backoff * 2, 30.0)
             self._log.warning(f"Exited rc={rc}, restarting in {backoff:.1f}s")
             if self.restart_cb:
                 self.restart_cb()
@@ -115,7 +115,7 @@ class Pipeline:
                 "-filter_complex",
                 f"[1:v]setpts=PTS-STARTPTS[ovin];"
                 f"[0:v][ovin]overlay=x=0:y=0:format=auto:eof_action=pass:enable='{enable}'[pre];"
-                f"[pre]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
+                f"[pre]zmq=b='tcp\\://*\\:{ZMQ_PORT}':linger=0[vout]",
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-b:v", "4M", "-g", "50", "-bf", "0",
@@ -129,7 +129,7 @@ class Pipeline:
                 "-thread_queue_size", "512",
                 "-i", f"{UDP_MAIN}?fifo_size=10000000&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
-                f"[0:v]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
+                f"[0:v]zmq=b='tcp\\://*\\:{ZMQ_PORT}':linger=0[vout]",
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-b:v", "4M", "-g", "50", "-bf", "0",
