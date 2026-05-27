@@ -113,6 +113,8 @@ class Pipeline:
             log.info(f"Encoder: overlay file found, enable='{enable}'")
             return [
                 "ffmpeg", "-y",
+                "-fflags", "+nobuffer",
+                "-flags", "low_delay",
                 "-thread_queue_size", "512",
                 "-i", f"{UDP_MAIN}?fifo_size=10000000&overrun_nonfatal=1&timeout=60000000",
                 "-thread_queue_size", "512",
@@ -125,7 +127,7 @@ class Pipeline:
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-threads", "16",
-                "-b:v", "7M", "-minrate", "7M", "-maxrate", "7M", "-bufsize", "7M",
+                "-b:v", "6.5M", "-minrate", "6.5M", "-maxrate", "6.5M", "-bufsize", "6.5M",
                 "-x264-params", "nal-hrd=cbr:force-cfr=1",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
@@ -135,6 +137,8 @@ class Pipeline:
             log.warning("Encoder: no overlay file, running passthrough")
             return [
                 "ffmpeg", "-y",
+                "-fflags", "+nobuffer",
+                "-flags", "low_delay",
                 "-thread_queue_size", "512",
                 "-i", f"{UDP_MAIN}?fifo_size=10000000&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
@@ -142,7 +146,7 @@ class Pipeline:
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-threads", "16",
-                "-b:v", "7M", "-minrate", "7M", "-maxrate", "7M", "-bufsize", "7M",
+                "-b:v", "6.5M", "-minrate", "6.5M", "-maxrate", "6.5M", "-bufsize", "6.5M",
                 "-x264-params", "nal-hrd=cbr:force-cfr=1",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
