@@ -98,7 +98,12 @@ async def overlay_push(req: PushRequest):
     asyncio.create_task(pipeline.trigger_overlay(req.duration_ms))
     return {"ok": True, "duration_ms": req.duration_ms}
 
-@app.get("/status")
+@app.post("/overlay/reset")
+async def overlay_reset():
+    log.info("Overlay RESET — forcing disable")
+    pipeline._overlay_active = False
+    ok = await pipeline._zmq("overlay", "enable", "0")
+    return {"ok": ok}
 async def status():
     return pipeline.status()
 
