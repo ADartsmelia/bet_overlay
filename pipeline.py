@@ -6,8 +6,8 @@ from pathlib import Path
 
 log = logging.getLogger("pipeline")
 
-SRT_INPUT  = "srt://192.168.200.130:33511?mode=caller&latency=200"
-SRT_OUTPUT = "srt://0.0.0.0:33512?mode=listener&latency=200"
+SRT_INPUT  = "srt://192.168.200.130:33511?mode=caller&latency=200&rcvbuf=1316&sndbuf=1316"
+SRT_OUTPUT = "srt://0.0.0.0:33512?mode=listener&latency=200&rcvbuf=1316&sndbuf=1316"
 UDP_MAIN   = "udp://127.0.0.1:5000"
 UDP_SCTE   = "udp://127.0.0.1:5001"
 ZMQ_PORT   = 5556
@@ -113,10 +113,12 @@ class Pipeline:
             log.info(f"Encoder: overlay file found, enable='{enable}'")
             return [
                 "ffmpeg", "-y",
-                "-fflags", "+nobuffer",
+                "-fflags", "+nobuffer+discardcorrupt",
                 "-flags", "low_delay",
+                "-strict", "experimental",
+                "-avioflags", "direct",
                 "-thread_queue_size", "512",
-                "-i", f"{UDP_MAIN}?fifo_size=10000000&overrun_nonfatal=1&timeout=60000000",
+                "-i", f"{UDP_MAIN}?fifo_size=1000000&overrun_nonfatal=1&timeout=60000000",
                 "-thread_queue_size", "512",
                 "-stream_loop", "-1",
                 "-i", OVERLAY,
@@ -127,29 +129,33 @@ class Pipeline:
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-threads", "16",
-                "-b:v", "6.5M", "-minrate", "6.5M", "-maxrate", "6.5M", "-bufsize", "6.5M",
-                "-x264-params", "nal-hrd=cbr:force-cfr=1",
+                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "650k",
+                "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0:sync-lookahead=0:sliced-threads=1",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
+                "-muxdelay", "0", "-muxpreload", "0",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
         else:
             log.warning("Encoder: no overlay file, running passthrough")
             return [
                 "ffmpeg", "-y",
-                "-fflags", "+nobuffer",
+                "-fflags", "+nobuffer+discardcorrupt",
                 "-flags", "low_delay",
+                "-strict", "experimental",
+                "-avioflags", "direct",
                 "-thread_queue_size", "512",
-                "-i", f"{UDP_MAIN}?fifo_size=10000000&overrun_nonfatal=1&timeout=60000000",
+                "-i", f"{UDP_MAIN}?fifo_size=1000000&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
                 f"[0:v]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-threads", "16",
-                "-b:v", "6.5M", "-minrate", "6.5M", "-maxrate", "6.5M", "-bufsize", "6.5M",
-                "-x264-params", "nal-hrd=cbr:force-cfr=1",
+                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "650k",
+                "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0:sync-lookahead=0:sliced-threads=1",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
+                "-muxdelay", "0", "-muxpreload", "0",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
 
