@@ -113,9 +113,6 @@ class Pipeline:
             log.info(f"Encoder: overlay file found, enable='{enable}'")
             return [
                 "ffmpeg", "-y",
-                "-fflags", "+nobuffer+discardcorrupt",
-                "-flags", "low_delay",
-                "-strict", "experimental",
                 "-thread_queue_size", "512",
                 "-i", f"{UDP_MAIN}?fifo_size=5000000&overrun_nonfatal=1&timeout=60000000",
                 "-thread_queue_size", "512",
@@ -128,20 +125,16 @@ class Pipeline:
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-threads", "16",
-                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "650k",
-                "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0:sync-lookahead=0:sliced-threads=1",
+                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "6500k",
+                "-x264-params", "nal-hrd=cbr:force-cfr=1",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
-                "-muxdelay", "0", "-muxpreload", "0",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
         else:
             log.warning("Encoder: no overlay file, running passthrough")
             return [
                 "ffmpeg", "-y",
-                "-fflags", "+nobuffer+discardcorrupt",
-                "-flags", "low_delay",
-                "-strict", "experimental",
                 "-thread_queue_size", "512",
                 "-i", f"{UDP_MAIN}?fifo_size=5000000&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
@@ -149,11 +142,10 @@ class Pipeline:
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-threads", "16",
-                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "650k",
-                "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0:sync-lookahead=0:sliced-threads=1",
+                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "6500k",
+                "-x264-params", "nal-hrd=cbr:force-cfr=1",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
-                "-muxdelay", "0", "-muxpreload", "0",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
 
