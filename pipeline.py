@@ -124,7 +124,8 @@ class Pipeline:
                 f"[pre]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
-                "-b:v", "4M", "-g", "50", "-bf", "0",
+                "-b:v", "7M", "-minrate", "7M", "-maxrate", "7M", "-bufsize", "14M",
+                "-g", "50", "-bf", "0",
                 "-c:a", "aac", "-b:a", "128k",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
@@ -138,7 +139,8 @@ class Pipeline:
                 f"[0:v]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
-                "-b:v", "4M", "-g", "50", "-bf", "0",
+                "-b:v", "7M", "-minrate", "7M", "-maxrate", "7M", "-bufsize", "14M",
+                "-g", "50", "-bf", "0",
                 "-c:a", "aac", "-b:a", "128k",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
