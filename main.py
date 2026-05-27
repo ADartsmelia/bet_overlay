@@ -104,6 +104,8 @@ async def overlay_reset():
     pipeline._overlay_active = False
     ok = await pipeline._zmq("overlay", "enable", "0")
     return {"ok": ok}
+
+@app.get("/status")
 async def status():
     return pipeline.status()
 
