@@ -124,10 +124,11 @@ class Pipeline:
                 f"[pre]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
+                "-threads", "16",
                 "-b:v", "7M", "-minrate", "7M", "-maxrate", "7M", "-bufsize", "7M",
                 "-x264-params", "nal-hrd=cbr:force-cfr=1",
                 "-g", "50", "-bf", "0",
-                "-c:a", "aac", "-b:a", "128k",
+                "-c:a", "copy",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
         else:
@@ -140,10 +141,11 @@ class Pipeline:
                 f"[0:v]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
+                "-threads", "16",
                 "-b:v", "7M", "-minrate", "7M", "-maxrate", "7M", "-bufsize", "7M",
                 "-x264-params", "nal-hrd=cbr:force-cfr=1",
                 "-g", "50", "-bf", "0",
-                "-c:a", "aac", "-b:a", "128k",
+                "-c:a", "copy",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
 
