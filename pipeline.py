@@ -119,14 +119,16 @@ class Pipeline:
                 "-stream_loop", "-1",
                 "-i", OVERLAY,
                 "-filter_complex",
-                f"[1:v]setpts=PTS-STARTPTS[ovin];"
-                f"[0:v][ovin]overlay=x=0:y=0:format=auto:eof_action=pass:enable='{enable}'[pre];"
+                f"[1:v]setpts=PTS-STARTPTS,format=yuva420p[ovin];"
+                f"[0:v]format=yuv420p[base];"
+                f"[base][ovin]overlay=x=0:y=0:format=yuv420:eof_action=pass:enable='{enable}'[pre];"
                 f"[pre]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
+                "-pix_fmt", "yuv420p",
                 "-threads", "16",
-                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "6500k",
-                "-x264-params", "nal-hrd=cbr:force-cfr=1",
+                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "3250k",
+                "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
                 "-f", "mpegts", SRT_OUTPUT,
@@ -138,12 +140,13 @@ class Pipeline:
                 "-thread_queue_size", "512",
                 "-i", f"{UDP_MAIN}?fifo_size=1316&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
-                f"[0:v]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
+                f"[0:v]format=yuv420p,zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
+                "-pix_fmt", "yuv420p",
                 "-threads", "16",
-                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "6500k",
-                "-x264-params", "nal-hrd=cbr:force-cfr=1",
+                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "3250k",
+                "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
                 "-f", "mpegts", SRT_OUTPUT,
