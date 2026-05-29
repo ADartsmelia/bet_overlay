@@ -63,6 +63,7 @@ class FFmpegProcess:
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                limit=1024*1024,
             )
             asyncio.create_task(self._stream_logs(self.process.stderr))
             rc = await self.process.wait()
@@ -78,15 +79,17 @@ class FFmpegProcess:
     async def _stream_logs(self, stream):
         if stream is None:
             return
-        async for line in stream:
-            txt = line.decode(errors="replace").rstrip()
-            if not txt:
-                continue
-            # Log stats lines (fps, bitrate, speed) at INFO level
-            if "fps=" in txt and "bitrate=" in txt:
-                self._log.info(f"STATS: {txt.strip()}")
-            elif txt.startswith("[") or "Error" in txt or "error" in txt or "Invalid" in txt:
-                self._log.debug(txt)
+        try:
+            async for line in stream:
+                txt = line.decode(errors="replace").rstrip()
+                if not txt:
+                    continue
+                if "fps=" in txt and "bitrate=" in txt:
+                    self._log.info(f"STATS: {txt.strip()}")
+                elif txt.startswith("[") or "Error" in txt or "error" in txt or "Invalid" in txt:
+                    self._log.debug(txt)
+        except Exception:
+            pass
 
 
 class Pipeline:
