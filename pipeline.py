@@ -6,8 +6,8 @@ from pathlib import Path
 
 log = logging.getLogger("pipeline")
 
-SRT_INPUT  = "srt://192.168.200.130:33511?mode=caller&latency=20"
-SRT_OUTPUT = "srt://0.0.0.0:33512?mode=listener&latency=20"
+SRT_INPUT  = "srt://192.168.200.130:33511?mode=caller&latency=200"
+SRT_OUTPUT = "srt://0.0.0.0:33512?mode=listener&latency=200"
 UDP_MAIN   = "udp://127.0.0.1:5000"
 UDP_SCTE   = "udp://127.0.0.1:5001"
 ZMQ_PORT   = 5556

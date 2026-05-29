@@ -142,7 +142,7 @@ async def latency():
     t_start = time.time()
     original, ours = await asyncio.gather(
         get_pts(f"{SRT_INPUT}"),
-        get_pts("srt://127.0.0.1:33512?mode=caller&latency=20"),
+        get_pts("srt://127.0.0.1:33512?mode=caller&latency=200"),
     )
     t_end = time.time()
 
