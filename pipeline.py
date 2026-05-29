@@ -131,6 +131,7 @@ class Pipeline:
                 "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
+                "-muxrate", "7500k",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
         else:
@@ -149,6 +150,7 @@ class Pipeline:
                 "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
+                "-muxrate", "7500k",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
 
