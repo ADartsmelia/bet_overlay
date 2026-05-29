@@ -121,13 +121,11 @@ class Pipeline:
             log.info(f"Encoder: overlay file found, enable='{enable}'")
             return [
                 "ffmpeg", "-y",
+                "-fflags", "+discardcorrupt+nobuffer",
                 "-thread_queue_size", "512",
-                "-i", f"{UDP_MAIN}?fifo_size=5000000&overrun_nonfatal=1&timeout=60000000",
-                "-thread_queue_size", "512",
-                "-stream_loop", "-1",
-                "-i", OVERLAY,
+                "-i", f"{UDP_MAIN}?fifo_size=131072&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
-                f"[1:v]format=rgba,setpts=PTS-STARTPTS[ovin];"
+                f"movie={OVERLAY}:loop=0,setpts=PTS-STARTPTS,format=rgba[ovin];"
                 f"[0:v][ovin]overlay=x=0:y=0:format=auto:eof_action=pass:enable='{enable}'[pre];"
                 f"[pre]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
@@ -146,7 +144,7 @@ class Pipeline:
             return [
                 "ffmpeg", "-y",
                 "-thread_queue_size", "512",
-                "-i", f"{UDP_MAIN}?fifo_size=5000000&overrun_nonfatal=1&timeout=60000000",
+                "-i", f"{UDP_MAIN}?fifo_size=131072&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
                 f"[0:v]format=yuv420p,zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
@@ -181,13 +179,8 @@ class Pipeline:
         async with self._overlay_lock:
             log.info(f"Overlay ON for {duration_ms}ms")
             self._overlay_active = True
-            # Reset overlay to frame 0 then enable
-            await self._zmq("overlay", "enable", "0")
-            await asyncio.sleep(0.1)
             await self._zmq("overlay", "enable", "1")
-
             await asyncio.sleep(duration_ms / 1000)
-
             log.info("Overlay OFF")
             self._overlay_active = False
             await self._zmq("overlay", "enable", "0")
