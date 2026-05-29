@@ -85,6 +85,8 @@ async def overlay_generate(req: GenerateRequest):
             odds=[req.odd1, req.odd2, req.odd3],
         )
         log.info(f"Overlay generated → {path}")
+        # Restart encoder to pick up new MOV
+        await pipeline.reload_overlay()
         return {"ok": True, "path": str(path)}
     except Exception as e:
         log.error(f"Generate failed: {e}")
@@ -92,7 +94,8 @@ async def overlay_generate(req: GenerateRequest):
 
 @app.post("/overlay/push")
 async def overlay_push(req: PushRequest):
-    overlay_path = Path("assets/overlay_out.mov")
+    from pipeline import OVERLAY
+    overlay_path = Path(OVERLAY)
     if not overlay_path.exists():
         log.warning("overlay_out.mov not found — generate first")
         return {"ok": False, "error": "Overlay not generated yet"}
