@@ -117,20 +117,25 @@ async def stats():
     async def probe(url):
         try:
             proc = await asyncio.create_subprocess_exec(
-                "ffprobe", "-v", "quiet", "-print_format", "json",
+                "ffprobe", "-v", "quiet",
+                "-analyzeduration", "3000000",
+                "-probesize", "1000000",
+                "-print_format", "json",
                 "-show_streams", "-show_format", url,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            out, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
+            out, _ = await asyncio.wait_for(proc.communicate(), timeout=10)
             data = json.loads(out)
             vs = next((s for s in data.get("streams", []) if s.get("codec_type") == "video"), {})
+            fmt = data.get("format", {})
             return {
-                "bitrate_kbps": int(data.get("format", {}).get("bit_rate", 0)) // 1000,
+                "bitrate_kbps": int(fmt.get("bit_rate", 0)) // 1000,
                 "codec": vs.get("codec_name"),
                 "fps": vs.get("r_frame_rate"),
                 "resolution": f"{vs.get('width')}x{vs.get('height')}",
                 "pix_fmt": vs.get("pix_fmt"),
+                "audio_streams": sum(1 for s in data.get("streams", []) if s.get("codec_type") == "audio"),
             }
         except Exception as e:
             return {"error": str(e)}
