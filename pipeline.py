@@ -180,22 +180,10 @@ class Pipeline:
 
     async def trigger_overlay(self, duration_ms: int):
         async with self._overlay_lock:
-            LOOP_DURATION = 12.0  # MOV duration in seconds
-            elapsed = time.time() - self.encoder._last_start
-            pos = elapsed % LOOP_DURATION
-            # Wait for next frame-0 boundary (max 12s wait)
-            wait = LOOP_DURATION - pos
-            if wait < 0.2:
-                wait = 0.0  # Already at boundary
-            log.info(f"Overlay ON in {wait:.1f}s (loop pos={pos:.1f}s)")
-            if wait > 0:
-                await asyncio.sleep(wait)
-
+            log.info(f"Overlay ON for {duration_ms}ms")
             self._overlay_active = True
-            log.info(f"Overlay showing for {duration_ms}ms")
             await self._zmq("overlay", "enable", "1")
             await asyncio.sleep(duration_ms / 1000)
-
             log.info("Overlay OFF")
             self._overlay_active = False
             await self._zmq("overlay", "enable", "0")
