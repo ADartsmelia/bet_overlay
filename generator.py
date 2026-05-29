@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from concurrent.futures import ThreadPoolExecutor
 
-ASSETS      = Path("assets")
+ASSETS      = Path(__file__).parent / "assets"
 TEMPLATE    = ASSETS / "WidgetBet_FULL_HD.mov"
 FONT        = ASSETS / "BebasNeue-Regular.ttf"
 OUTPUT      = ASSETS / "overlay_out.mov"

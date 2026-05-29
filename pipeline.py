@@ -11,7 +11,7 @@ SRT_OUTPUT = "srt://127.0.0.1:33512?mode=caller&latency=200&streamid=publish:liv
 UDP_MAIN   = "udp://127.0.0.1:5000"
 UDP_SCTE   = "udp://127.0.0.1:5001"
 ZMQ_PORT   = 5556
-OVERLAY    = "assets/overlay_out.mov"
+OVERLAY    = str(Path(__file__).parent / "assets" / "overlay_out.mov")
 
 
 class FFmpegProcess:
