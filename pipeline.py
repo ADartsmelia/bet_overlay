@@ -80,7 +80,12 @@ class FFmpegProcess:
             return
         async for line in stream:
             txt = line.decode(errors="replace").rstrip()
-            if txt:
+            if not txt:
+                continue
+            # Log stats lines (fps, bitrate, speed) at INFO level
+            if "fps=" in txt and "bitrate=" in txt:
+                self._log.info(f"STATS: {txt.strip()}")
+            elif txt.startswith("[") or "Error" in txt or "error" in txt or "Invalid" in txt:
                 self._log.debug(txt)
 
 

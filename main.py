@@ -40,6 +40,8 @@ ws_handler = WSLogHandler()
 ws_handler.setFormatter(logging.Formatter("%(asctime)s [%(name)s] %(levelname)s — %(message)s", "%H:%M:%S"))
 
 logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler(), ws_handler])
+logging.getLogger("ffmpeg.encoder").setLevel(logging.INFO)
+logging.getLogger("ffmpeg.ingest").setLevel(logging.WARNING)
 log = logging.getLogger("main")
 
 # ── App lifecycle ─────────────────────────────────────────────────────────────
@@ -108,6 +110,36 @@ async def overlay_reset():
 @app.get("/status")
 async def status():
     return pipeline.status()
+
+@app.get("/stats")
+async def stats():
+    import asyncio, json
+    async def probe(url):
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "ffprobe", "-v", "quiet", "-print_format", "json",
+                "-show_streams", "-show_format", url,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            out, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
+            data = json.loads(out)
+            vs = next((s for s in data.get("streams", []) if s.get("codec_type") == "video"), {})
+            return {
+                "bitrate_kbps": int(data.get("format", {}).get("bit_rate", 0)) // 1000,
+                "codec": vs.get("codec_name"),
+                "fps": vs.get("r_frame_rate"),
+                "resolution": f"{vs.get('width')}x{vs.get('height')}",
+                "pix_fmt": vs.get("pix_fmt"),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    original, ours = await asyncio.gather(
+        probe("srt://192.168.200.130:33511?mode=caller&latency=200"),
+        probe("srt://127.0.0.1:33512?mode=caller&latency=200"),
+    )
+    return {"original": original, "ours": ours}
 
 @app.websocket("/ws/logs")
 async def ws_logs(websocket: WebSocket):
