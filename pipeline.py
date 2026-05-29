@@ -125,7 +125,7 @@ class Pipeline:
                 "-thread_queue_size", "512",
                 "-i", f"{UDP_MAIN}?fifo_size=131072&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
-                f"movie={OVERLAY}:loop=0,setpts=PTS-STARTPTS,format=rgba[ovin];"
+                f"movie={OVERLAY}:loop=-1,setpts=PTS-STARTPTS,format=rgba[ovin];"
                 f"[0:v][ovin]overlay=x=0:y=0:format=auto:eof_action=pass:enable='{enable}'[pre];"
                 f"[pre]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
@@ -177,10 +177,22 @@ class Pipeline:
 
     async def trigger_overlay(self, duration_ms: int):
         async with self._overlay_lock:
-            log.info(f"Overlay ON for {duration_ms}ms")
+            LOOP_DURATION = 12.0  # MOV duration in seconds
+            elapsed = time.time() - self.encoder._last_start
+            pos = elapsed % LOOP_DURATION
+            # Wait for next frame-0 boundary (max 12s wait)
+            wait = LOOP_DURATION - pos
+            if wait < 0.2:
+                wait = 0.0  # Already at boundary
+            log.info(f"Overlay ON in {wait:.1f}s (loop pos={pos:.1f}s)")
+            if wait > 0:
+                await asyncio.sleep(wait)
+
             self._overlay_active = True
+            log.info(f"Overlay showing for {duration_ms}ms")
             await self._zmq("overlay", "enable", "1")
             await asyncio.sleep(duration_ms / 1000)
+
             log.info("Overlay OFF")
             self._overlay_active = False
             await self._zmq("overlay", "enable", "0")
