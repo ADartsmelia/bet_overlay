@@ -124,8 +124,11 @@ class Pipeline:
                 "-fflags", "+discardcorrupt+nobuffer",
                 "-thread_queue_size", "512",
                 "-i", f"{UDP_MAIN}?fifo_size=131072&overrun_nonfatal=1&timeout=60000000",
+                "-thread_queue_size", "512",
+                "-stream_loop", "-1",
+                "-i", OVERLAY,
                 "-filter_complex",
-                f"movie={OVERLAY}:loop=-1,setpts=PTS-STARTPTS,format=rgba[ovin];"
+                f"[1:v]format=rgba,setpts=PTS-STARTPTS[ovin];"
                 f"[0:v][ovin]overlay=x=0:y=0:format=auto:eof_action=pass:enable='{enable}'[pre];"
                 f"[pre]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
