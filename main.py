@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from pipeline import Pipeline
+from pipeline import Pipeline, SRT_INPUT
 from generator import generate_overlay
 
 # ── Logging ──────────────────────────────────────────────────────────────────
@@ -111,8 +111,50 @@ async def overlay_reset():
 async def status():
     return pipeline.status()
 
-@app.get("/stats")
-async def stats():
+@app.get("/latency")
+async def latency():
+    import asyncio, json, time
+
+    async def get_pts(url):
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "ffprobe", "-v", "quiet",
+                "-analyzeduration", "2000000",
+                "-probesize", "500000",
+                "-print_format", "json",
+                "-show_packets", "-select_streams", "v:0",
+                "-read_intervals", "%+#2",
+                url,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            out, _ = await asyncio.wait_for(proc.communicate(), timeout=8)
+            data = json.loads(out)
+            pkts = data.get("packets", [])
+            if pkts:
+                pts = float(pkts[-1].get("pts_time", 0))
+                wall = time.time()
+                return {"pts": pts, "wall": wall}
+            return {"error": "no packets"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    t_start = time.time()
+    original, ours = await asyncio.gather(
+        get_pts(f"{SRT_INPUT}"),
+        get_pts("srt://127.0.0.1:33512?mode=caller&latency=20"),
+    )
+    t_end = time.time()
+
+    if "pts" in original and "pts" in ours:
+        diff = original["pts"] - ours["pts"]
+        return {
+            "original_pts": round(original["pts"], 3),
+            "ours_pts": round(ours["pts"], 3),
+            "diff_seconds": round(diff, 3),
+            "note": "positive = ours is behind original"
+        }
+    return {"original": original, "ours": ours, "probe_took": round(t_end - t_start, 2)}
     import asyncio, json
     async def probe(url):
         try:
