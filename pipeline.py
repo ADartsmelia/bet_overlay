@@ -121,6 +121,8 @@ class Pipeline:
     def _ingest_cmd(self):
         return [
             "ffmpeg", "-y",
+            "-fflags", "+nobuffer+discardcorrupt",
+            "-flags", "low_delay",
             "-i", SRT_INPUT,
             "-map", "0", "-c", "copy", "-copyts",
             "-f", "tee",
@@ -137,8 +139,9 @@ class Pipeline:
             return [
                 "ffmpeg", "-y",
                 "-fflags", "+discardcorrupt+nobuffer",
+                "-flags", "low_delay",
                 "-thread_queue_size", "512",
-                "-i", f"{UDP_MAIN}?fifo_size=131072&overrun_nonfatal=1&timeout=60000000",
+                "-i", f"{UDP_MAIN}?fifo_size=1316&overrun_nonfatal=1&timeout=60000000",
                 "-thread_queue_size", "512",
                 "-stream_loop", "-1",
                 "-i", OVERLAY,
@@ -163,8 +166,10 @@ class Pipeline:
             log.warning("Encoder: no overlay, passthrough")
             return [
                 "ffmpeg", "-y",
+                "-fflags", "+discardcorrupt+nobuffer",
+                "-flags", "low_delay",
                 "-thread_queue_size", "512",
-                "-i", f"{UDP_MAIN}?fifo_size=131072&overrun_nonfatal=1&timeout=60000000",
+                "-i", f"{UDP_MAIN}?fifo_size=1316&overrun_nonfatal=1&timeout=60000000",
                 "-filter_complex",
                 f"[0:v]format=yuv420p,zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]",
