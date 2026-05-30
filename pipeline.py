@@ -102,19 +102,19 @@ class Pipeline:
         self.encoder = FFmpegProcess("encoder", self._encoder_cmd)
 
     def get_inactive_path(self):
-        """Return temp path for generating new overlay without touching active file."""
+        """Return temp path for generating new overlay."""
         return str(Path(OVERLAY).parent / "overlay_out_new.mov")
 
     def get_active_path(self):
         return OVERLAY
 
     def swap_slot(self):
-        """Atomically replace active overlay with newly generated one."""
+        """Replace active overlay file with newly generated one."""
+        import os
         new_path = self.get_inactive_path()
         if Path(new_path).exists():
-            import os
             os.replace(new_path, OVERLAY)
-            log.info(f"Overlay swapped: {new_path} → {OVERLAY}")
+            log.info(f"Overlay file replaced: {new_path} → {OVERLAY}")
 
     # ── Commands ──────────────────────────────────────────────────────────────
 
@@ -204,9 +204,12 @@ class Pipeline:
             await self._zmq("overlay@ov", "enable", "0")
 
     async def reload_overlay(self):
-        """Swap new overlay into place atomically — no encoder restart."""
+        """Replace overlay file and restart encoder to load new content."""
         self.swap_slot()
-        log.info("Overlay file swapped atomically — encoder will pick up on next loop")
+        log.info("Restarting encoder to load new overlay file")
+        await self.encoder.stop()
+        await asyncio.sleep(0.3)
+        await self.encoder.start()
 
     # ── ZMQ ──────────────────────────────────────────────────────────────────
 
@@ -249,4 +252,4 @@ class Pipeline:
             "ingest":  "running" if self.ingest.alive  else "down",
             "encoder": "running" if self.encoder.alive else "down",
             "overlay": self._overlay_active,
-        }
+        } 
