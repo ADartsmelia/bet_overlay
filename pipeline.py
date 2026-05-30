@@ -7,10 +7,9 @@ from pathlib import Path
 log = logging.getLogger("pipeline")
 
 SRT_INPUT  = "srt://192.168.200.130:33511?mode=caller&latency=200"
-SRT_OUTPUT = "srt://:33512?mode=listener&latency=200"
+SRT_OUTPUT = "srt://127.0.0.1:33512?mode=caller&latency=200&streamid=publish:live"
 UDP_MAIN   = "udp://127.0.0.1:5000"
 UDP_SCTE   = "udp://127.0.0.1:5001"
-UDP_ENC    = "udp://127.0.0.1:5002"  # FFmpeg encoder → tsp
 ZMQ_PORT   = 5556
 OVERLAY    = str(Path(__file__).parent / "assets" / "overlay_out.mov")
 
@@ -100,7 +99,6 @@ class Pipeline:
 
         self.ingest  = FFmpegProcess("ingest",  self._ingest_cmd)
         self.encoder = FFmpegProcess("encoder", self._encoder_cmd)
-        self.tsp     = FFmpegProcess("tsp",     self._tsp_cmd)
 
     def get_inactive_path(self):
         return str(Path(OVERLAY).parent / "overlay_out_new.mov")
@@ -158,7 +156,7 @@ class Pipeline:
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
                 "-muxrate", "7000k",
-                "-f", "mpegts", f"{UDP_ENC}?pkt_size=1316",
+                "-f", "mpegts", SRT_OUTPUT,
             ]
         else:
             log.warning("Encoder: no overlay, passthrough")
@@ -180,22 +178,8 @@ class Pipeline:
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
                 "-muxrate", "7000k",
-                "-f", "mpegts", f"{UDP_ENC}?pkt_size=1316",
+                "-f", "mpegts", SRT_OUTPUT,
             ]
-
-    def _tsp_cmd(self):
-        # Read UDP:5002, inject language into PMT, output as SRT listener on :33512
-        return [
-            "tsp",
-            "-I", "udp", "127.0.0.1:5002", "--no-reuse-port",
-            "-P", "pmt",
-            "--set-stream-identifier", "0x101:rus",
-            "--set-stream-identifier", "0x102:eng",
-            "--set-stream-identifier", "0x103:kat",
-            "--set-stream-identifier", "0x104:ukr",
-            "--set-stream-identifier", "0x105:kaz",
-            "-O", "srt", "--listener", ":33512",
-        ]
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -203,14 +187,11 @@ class Pipeline:
         await self.ingest.start()
         await asyncio.sleep(1)
         await self.encoder.start()
-        await asyncio.sleep(1)
-        await self.tsp.start()
         self._watchdog_task = asyncio.create_task(self._watchdog())
 
     async def stop(self):
         if self._watchdog_task:
             self._watchdog_task.cancel()
-        await self.tsp.stop()
         await self.encoder.stop()
         await self.ingest.stop()
 
@@ -273,6 +254,5 @@ class Pipeline:
         return {
             "ingest":  "running" if self.ingest.alive  else "down",
             "encoder": "running" if self.encoder.alive else "down",
-            "tsp":     "running" if self.tsp.alive     else "down",
             "overlay": self._overlay_active,
         }
