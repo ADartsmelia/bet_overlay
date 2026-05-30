@@ -147,14 +147,19 @@ class Pipeline:
                 f"[0:v][ovin]overlay@ov=x=0:y=0:format=auto:eof_action=pass:enable='{enable}'[pre];"
                 f"[pre]zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
+                "-metadata:s:a:0", "language=rus",
+                "-metadata:s:a:1", "language=eng",
+                "-metadata:s:a:2", "language=kat",
+                "-metadata:s:a:3", "language=ukr",
+                "-metadata:s:a:4", "language=kaz",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-pix_fmt", "yuv420p",
                 "-threads", "16",
-                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "3250k",
+                "-b:v", "6000k", "-minrate", "6000k", "-maxrate", "6000k", "-bufsize", "3000k",
                 "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
-                "-muxrate", "7500k",
+                "-muxrate", "7000k",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
         else:
@@ -166,14 +171,19 @@ class Pipeline:
                 "-filter_complex",
                 f"[0:v]format=yuv420p,zmq=b='tcp\\://*\\:{ZMQ_PORT}'[vout]",
                 "-map", "[vout]", "-map", "0:a?",
+                "-metadata:s:a:0", "language=rus",
+                "-metadata:s:a:1", "language=eng",
+                "-metadata:s:a:2", "language=kat",
+                "-metadata:s:a:3", "language=ukr",
+                "-metadata:s:a:4", "language=kaz",
                 "-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency",
                 "-pix_fmt", "yuv420p",
                 "-threads", "16",
-                "-b:v", "6500k", "-minrate", "6500k", "-maxrate", "6500k", "-bufsize", "3250k",
+                "-b:v", "6000k", "-minrate", "6000k", "-maxrate", "6000k", "-bufsize", "3000k",
                 "-x264-params", "nal-hrd=cbr:force-cfr=1:rc-lookahead=0",
                 "-g", "50", "-bf", "0",
                 "-c:a", "copy",
-                "-muxrate", "7500k",
+                "-muxrate", "7000k",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
 
@@ -252,4 +262,4 @@ class Pipeline:
             "ingest":  "running" if self.ingest.alive  else "down",
             "encoder": "running" if self.encoder.alive else "down",
             "overlay": self._overlay_active,
-        } 
+        }
