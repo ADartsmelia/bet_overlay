@@ -164,7 +164,6 @@ class Pipeline:
                 "-metadata:s:a:3", "language=ukr",
                 "-metadata:s:a:4", "language=kaz",
                 "-muxrate", "7000k",
-                "-mpegts_flags", "system_b",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
         else:
@@ -192,7 +191,6 @@ class Pipeline:
                 "-metadata:s:a:3", "language=ukr",
                 "-metadata:s:a:4", "language=kaz",
                 "-muxrate", "7000k",
-                "-mpegts_flags", "system_b",
                 "-f", "mpegts", SRT_OUTPUT,
             ]
 
