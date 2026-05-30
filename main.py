@@ -79,13 +79,17 @@ class PushRequest(BaseModel):
 async def overlay_generate(req: GenerateRequest):
     log.info(f"Generating overlay: {req.team1}/{req.odd1}, {req.team2}/{req.odd2}, {req.team3}/{req.odd3}")
     try:
+        # Write to inactive slot so stream keeps playing active slot
+        target_path = pipeline.get_inactive_path()
+        log.info(f"Writing to inactive slot: {target_path}")
         path = await asyncio.to_thread(
             generate_overlay,
             teams=[req.team1, req.team2, req.team3],
             odds=[req.odd1, req.odd2, req.odd3],
+            output_path=target_path,
         )
         log.info(f"Overlay generated → {path}")
-        # Restart encoder to pick up new MOV
+        # Swap slot — no restart needed
         await pipeline.reload_overlay()
         return {"ok": True, "path": str(path)}
     except Exception as e:
@@ -94,10 +98,9 @@ async def overlay_generate(req: GenerateRequest):
 
 @app.post("/overlay/push")
 async def overlay_push(req: PushRequest):
-    from pipeline import OVERLAY
-    overlay_path = Path(OVERLAY)
-    if not overlay_path.exists():
-        log.warning("overlay_out.mov not found — generate first")
+    active_path = Path(pipeline.get_active_path())
+    if not active_path.exists():
+        log.warning("No overlay file found — generate first")
         return {"ok": False, "error": "Overlay not generated yet"}
     log.info(f"Pushing overlay for {req.duration_ms}ms")
     asyncio.create_task(pipeline.trigger_overlay(req.duration_ms))

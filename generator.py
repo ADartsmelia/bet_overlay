@@ -43,9 +43,11 @@ def generate_overlay(
     teams: list[str] = None,
     odds:  list[str] = None,
     threads: int = 8,
+    output_path: str = None,
 ) -> Path:
     teams = teams or ["PALACE", "ვრე", "RAYO VALLECANO"]
     odds  = odds  or ["1.50", "1.50", "1.50"]
+    out   = Path(output_path) if output_path else OUTPUT
 
     if not TEMPLATE.exists():
         raise FileNotFoundError(f"Template not found: {TEMPLATE}")
@@ -65,7 +67,7 @@ def generate_overlay(
             "-s", f"{W}x{H}", "-pix_fmt", "argb",
             "-r", str(FPS), "-i", "pipe:0",
             "-c:v", "qtrle", "-pix_fmt", "argb",
-            "-y", str(OUTPUT),
+            "-y", str(out),
         ],
         stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
     )
@@ -97,4 +99,4 @@ def generate_overlay(
     writer.stdin.close()
     writer.wait()
 
-    return OUTPUT
+    return out
